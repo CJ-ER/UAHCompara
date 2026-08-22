@@ -1,0 +1,9 @@
+{
+  "name": "uah-compara",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Comparador de profesores de la EPS UAH",
+  "scripts": {
+    "start": "python3 -m http.server 4173"
+  }
+}
