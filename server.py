@@ -140,7 +140,7 @@ class ApplicationHandler(SimpleHTTPRequestHandler):
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            payload = json.loads(self.rfile.read(length))
+            payload = json.loads(self.rfile.read(length).decode("utf-8"))
             required = (payload["degree"], payload["winner"], payload["loser"])
             save_match(*required, bool(payload.get("final")))
             self.send_json({"ok": True})

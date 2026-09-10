@@ -54,11 +54,16 @@ async function saveMatch(winner, loser, isFinal) {
   winnerScore.votes += 1;
   if (isFinal) winnerScore.wins += 1;
   state.scores[winner.name] = winnerScore;
-  await fetch('/api/matches', {
+  const response = await fetch('/api/matches', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ degree: state.degree.id, winner: winner.name, loser: loser.name, final: isFinal })
   });
+  if (!response.ok) throw new Error('Could not save match');
+}
+
+async function refreshScores() {
+  await loadScores();
 }
 
 function weightedPick(pool) {
@@ -205,9 +210,17 @@ app.addEventListener('click', (event) => {
   if (choiceButton) {
     const chosen = [state.champion, state.opponent].find((professor) => professor.name === choiceButton.dataset.choice);
     const rejected = [state.champion, state.opponent].find((professor) => professor.name !== chosen.name);
-    saveMatch(chosen, rejected, state.round >= state.maxRounds);
+    const isFinal = state.round >= state.maxRounds;
+    const savePromise = saveMatch(chosen, rejected, isFinal);
+    savePromise.catch(() => {
+      state.scores[chosen.name].votes -= 1;
+      if (isFinal) state.scores[chosen.name].wins -= 1;
+    });
     state.champion = chosen;
-    if (state.round >= state.maxRounds) { renderResult(); return; }
+    if (isFinal) {
+      savePromise.then(refreshScores).catch(() => {}).finally(renderResult);
+      return;
+    }
     state.round += 1;
     state.opponent = pickOpponent();
     renderBattle();
