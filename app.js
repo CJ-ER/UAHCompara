@@ -172,7 +172,7 @@ function renderResult() {
   state.screen = 'result';
   const leaderboard = getProfessorsFor(state.degree)
     .map((professor) => ({ ...professor, votes: state.scores[professor.name]?.votes || 0, wins: state.scores[professor.name]?.wins || 0 }))
-    .sort((first, second) => second.wins - first.wins || second.votes - first.votes || first.name.localeCompare(second.name))
+    .sort((first, second) => second.votes - first.votes || second.wins - first.wins || first.name.localeCompare(second.name))
     .slice(0, 5);
   app.innerHTML = `
     <section class="result-view">
