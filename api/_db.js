@@ -17,7 +17,9 @@ export async function ensureSchema() {
 }
 
 export function json(response, body, status = 200, headers = {}) {
-  return response.status(status).setHeader('Cache-Control', 'no-store').setHeader(headers).json(body);
+  const result = response.status(status).setHeader('Cache-Control', 'no-store');
+  Object.entries(headers).forEach(([name, value]) => result.setHeader(name, value));
+  return result.json(body);
 }
 
 export function adminSignature(value) {
