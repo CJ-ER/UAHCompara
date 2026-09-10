@@ -1,5 +1,4 @@
-import { sql } from '@vercel/postgres';
-import { ensureSchema, isAdmin, json } from '../_db.js';
+import { ensureSchema, isAdmin, json, sql } from '../_db.js';
 
 export default async function handler(request, response) {
   if (request.method !== 'POST') return json(response, { error: 'Method not allowed' }, 405);

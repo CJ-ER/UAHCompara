@@ -4,7 +4,7 @@
   "private": true,
   "description": "Comparador de profesores de la EPS UAH",
   "dependencies": {
-    "@vercel/postgres": "latest"
+    "@neondatabase/serverless": "latest"
   },
   "scripts": {
     "start": "python3 server.py"
