@@ -1,8 +1,5 @@
 import crypto from 'node:crypto';
-import { neon } from '@neondatabase/serverless';
-
-const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-export const sql = neon(connectionString);
+import { sql } from '@vercel/postgres';
 
 export async function ensureSchema() {
   await sql`
