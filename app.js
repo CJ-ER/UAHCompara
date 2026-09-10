@@ -37,9 +37,12 @@ async function loadScores() {
   try {
     const response = await fetch(`/api/scores?degree=${encodeURIComponent(state.degree.id)}`);
     if (!response.ok) throw new Error('Could not load scores');
-    state.scores = Object.fromEntries((await response.json()).scores.map((score) => [score.professor_name, score]));
+    const payload = await response.json();
+    if (!Array.isArray(payload.scores)) throw new Error('Invalid scores response');
+    state.scores = Object.fromEntries(payload.scores.map((score) => [score.professor_name, score]));
+    return true;
   } catch {
-    state.scores = {};
+    return false;
   }
 }
 
