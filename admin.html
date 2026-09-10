@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UAH Compara | Panel privado</title>
+  <style>
+    :root { font-family: Arial, sans-serif; color: #16242d; background: #f5f1e8; }
+    body { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+    h1, h2 { margin: 0 0 16px; }
+    form, .department { background: #fff; border: 1px solid #d8d1c4; padding: 24px; margin: 20px 0; }
+    input, button { box-sizing: border-box; padding: 12px; font: inherit; }
+    input { width: min(100%, 360px); border: 1px solid #aaa; }
+    button { border: 0; background: #16242d; color: #fff; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e5dfd4; }
+    .muted { color: #66727a; }
+    #message { color: #c4473d; min-height: 20px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Panel privado de calidad</h1>
+    <p class="muted">Estadísticas anónimas de UAH Compara</p>
+    <form id="login-form">
+      <label for="password">Contraseña de administración</label><br><br>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <button type="submit">Entrar</button>
+      <p id="message" role="alert"></p>
+    </form>
+    <section id="dashboard" hidden></section>
+  </main>
+  <script>
+    const form = document.querySelector('#login-form');
+    const message = document.querySelector('#message');
+    const dashboard = document.querySelector('#dashboard');
+    const labels = {
+      computadores: 'Ingeniería de Computadores',
+      'sistemas-informacion': 'Ingeniería en Sistemas de Información',
+      informatica: 'Ingeniería Informática',
+      'mates-computacion': 'Matemáticas y Computación',
+      'electronica-automatica': 'Ingeniería en Electrónica y Automática Industrial',
+      'tecnologias-industriales': 'Ingeniería en Tecnologías Industriales',
+      'electronica-comunicaciones': 'Ingeniería Electrónica de Comunicaciones',
+      'sistemas-telecomunicacion': 'Ingeniería en Sistemas de Telecomunicación',
+      'tecnologias-telecomunicacion': 'Ingeniería en Tecnologías de Telecomunicación',
+      telematica: 'Ingeniería Telemática'
+    };
+    async function loadDashboard() {
+      const response = await fetch('/api/admin/scores');
+      if (!response.ok) throw new Error('No autorizado');
+      const { departments } = await response.json();
+      dashboard.innerHTML = Object.entries(departments).map(([department, degrees]) => `
+        <article class="department"><h2>${department}</h2>
+          ${degrees.map(({ degree, scores }) => `<h3>${labels[degree]}</h3>
+            <table><thead><tr><th>Profesor</th><th>Votos</th><th>Victorias</th></tr></thead>
+            <tbody>${scores.length ? scores.map((score) => `<tr><td>${score.professor_name}</td><td>${score.votes}</td><td>${score.wins}</td></tr>`).join('') : '<tr><td colspan="3" class="muted">Sin votos todavía</td></tr>'}</tbody></table>`).join('')}
+        </article>`).join('');
+      form.hidden = true;
+      dashboard.hidden = false;
+    }
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      message.textContent = '';
+      const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.querySelector('#password').value }) });
+      if (!response.ok) { message.textContent = 'Contraseña incorrecta o panel no configurado.'; return; }
+      try { await loadDashboard(); } catch { message.textContent = 'No se pudo cargar el panel.'; }
+    });
+  </script>
+</body>
+</html>

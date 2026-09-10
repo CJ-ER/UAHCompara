@@ -26,68 +26,39 @@ const professors = [
   { name: 'Pablo León', role: 'Sistemas digitales', group: 'Telecomunicación', image: 'https://i.pravatar.cc/600?img=14' }
 ];
 
-const state = { screen: 'home', degree: null, champion: null, opponent: null, round: 1, maxRounds: 6 };
+const state = { screen: 'home', degree: null, champion: null, opponent: null, round: 1, maxRounds: 6, scores: {} };
 const app = document.querySelector('#app');
-const eloStorageKey = 'uah-compara-elo-v1';
-const votesStorageKey = 'uah-compara-votes-v1';
-const winsStorageKey = 'uah-compara-wins-v1';
 
 function getProfessorsFor(degree) {
   return officialCatalog[degree.id].professors.map((professor) => ({ ...professor, group: degree.group }));
 }
 
-function getEloRatings() {
+async function loadScores() {
   try {
-    return JSON.parse(localStorage.getItem(eloStorageKey)) || {};
+    const response = await fetch(`/api/scores?degree=${encodeURIComponent(state.degree.id)}`);
+    if (!response.ok) throw new Error('Could not load scores');
+    state.scores = Object.fromEntries((await response.json()).scores.map((score) => [score.professor_name, score]));
   } catch {
-    return {};
+    state.scores = {};
   }
 }
 
 function getElo(professor) {
-  const ratings = getEloRatings();
-  return ratings[state.degree.id]?.[professor.name] || 1500;
+  const score = state.scores[professor.name] || { votes: 0, wins: 0 };
+  const popularity = Math.tanh((score.votes + (score.wins * 2)) / 20);
+  return 1500 + (80 * popularity);
 }
 
-function getVoteRatings() {
-  try {
-    return JSON.parse(localStorage.getItem(votesStorageKey)) || {};
-  } catch {
-    return {};
-  }
-}
-
-function getWinRatings() {
-  try {
-    return JSON.parse(localStorage.getItem(winsStorageKey)) || {};
-  } catch {
-    return {};
-  }
-}
-
-function saveMatch(winner, loser, isFinal) {
-  const ratings = getEloRatings();
-  const votes = getVoteRatings();
-  const degreeRatings = ratings[state.degree.id] || {};
-  const winnerElo = degreeRatings[winner.name] || 1500;
-  const loserElo = degreeRatings[loser.name] || 1500;
-  const expectedWinner = 1 / (1 + 10 ** ((loserElo - winnerElo) / 400));
-  const change = Math.round(32 * (1 - expectedWinner));
-  degreeRatings[winner.name] = winnerElo + change;
-  degreeRatings[loser.name] = loserElo - change;
-  ratings[state.degree.id] = degreeRatings;
-  localStorage.setItem(eloStorageKey, JSON.stringify(ratings));
-  const degreeVotes = votes[state.degree.id] || {};
-  degreeVotes[winner.name] = (degreeVotes[winner.name] || 0) + 1;
-  votes[state.degree.id] = degreeVotes;
-  localStorage.setItem(votesStorageKey, JSON.stringify(votes));
-  if (isFinal) {
-    const wins = getWinRatings();
-    const degreeWins = wins[state.degree.id] || {};
-    degreeWins[winner.name] = (degreeWins[winner.name] || 0) + 1;
-    wins[state.degree.id] = degreeWins;
-    localStorage.setItem(winsStorageKey, JSON.stringify(wins));
-  }
+async function saveMatch(winner, loser, isFinal) {
+  const winnerScore = state.scores[winner.name] || { professor_name: winner.name, votes: 0, wins: 0 };
+  winnerScore.votes += 1;
+  if (isFinal) winnerScore.wins += 1;
+  state.scores[winner.name] = winnerScore;
+  await fetch('/api/matches', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ degree: state.degree.id, winner: winner.name, loser: loser.name, final: isFinal })
+  });
 }
 
 function weightedPick(pool) {
@@ -103,6 +74,13 @@ function weightedPick(pool) {
 
 function pickOpponent() {
   const pool = getProfessorsFor(state.degree).filter((professor) => professor.name !== state.champion.name);
+  return weightedPick(pool);
+}
+
+function pickReplacement(currentProfessor, otherProfessor) {
+  const pool = getProfessorsFor(state.degree).filter((professor) => (
+    professor.name !== currentProfessor.name && professor.name !== otherProfessor.name
+  ));
   return weightedPick(pool);
 }
 
@@ -141,6 +119,7 @@ function professorCard(professor, label) {
       <div class="professor-info">
         <h2>${professor.name}</h2>
         <p class="professor-role">${professor.role}</p>
+        <button class="unknown-button" type="button" data-skip="${professor.name}">No le conozco</button>
       </div>
     </article>`;
 }
@@ -168,10 +147,8 @@ function renderBattle() {
 
 function renderResult() {
   state.screen = 'result';
-  const votes = getVoteRatings()[state.degree.id] || {};
-  const wins = getWinRatings()[state.degree.id] || {};
   const leaderboard = getProfessorsFor(state.degree)
-    .map((professor) => ({ ...professor, votes: votes[professor.name] || 0, wins: wins[professor.name] || 0 }))
+    .map((professor) => ({ ...professor, votes: state.scores[professor.name]?.votes || 0, wins: state.scores[professor.name]?.wins || 0 }))
     .sort((first, second) => second.wins - first.wins || second.votes - first.votes || first.name.localeCompare(second.name))
     .slice(0, 5);
   app.innerHTML = `
@@ -198,8 +175,9 @@ function renderResult() {
     </section>`;
 }
 
-function startDegree(degreeId) {
+async function startDegree(degreeId) {
   state.degree = degrees.find((degree) => degree.id === degreeId);
+  await loadScores();
   const pool = getProfessorsFor(state.degree);
   state.champion = weightedPick(pool);
   state.opponent = weightedPick(pool.filter((professor) => professor.name !== state.champion.name));
@@ -210,6 +188,18 @@ function startDegree(degreeId) {
 app.addEventListener('click', (event) => {
   const degreeButton = event.target.closest('[data-degree]');
   if (degreeButton) { startDegree(degreeButton.dataset.degree); return; }
+
+  const skipButton = event.target.closest('[data-skip]');
+  if (skipButton) {
+    const skipped = skipButton.dataset.skip;
+    if (state.champion.name === skipped) {
+      state.champion = pickReplacement(state.champion, state.opponent);
+    } else if (state.opponent.name === skipped) {
+      state.opponent = pickReplacement(state.opponent, state.champion);
+    }
+    renderBattle();
+    return;
+  }
 
   const choiceButton = event.target.closest('[data-choice]');
   if (choiceButton) {
