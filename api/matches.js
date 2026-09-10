@@ -8,6 +8,11 @@ export default async function handler(request, response) {
   await ensureSchema();
   await sql`INSERT INTO professor_scores (degree_id, professor_name) VALUES (${degree}, ${winner}) ON CONFLICT DO NOTHING`;
   await sql`INSERT INTO professor_scores (degree_id, professor_name) VALUES (${degree}, ${loser}) ON CONFLICT DO NOTHING`;
-  await sql`UPDATE professor_scores SET votes = votes + 1, wins = wins + ${isFinal ? 1 : 0} WHERE degree_id = ${degree} AND professor_name = ${winner}`;
-  return json(response, { ok: true });
+  const result = await sql`
+    UPDATE professor_scores
+    SET votes = votes + 1, wins = wins + ${isFinal ? 1 : 0}
+    WHERE degree_id = ${degree} AND professor_name = ${winner}
+    RETURNING professor_name, votes, wins
+  `;
+  return json(response, { ok: true, score: result.rows[0] });
 }

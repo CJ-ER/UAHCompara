@@ -35,7 +35,7 @@ function getProfessorsFor(degree) {
 
 async function loadScores() {
   try {
-    const response = await fetch(`/api/scores?degree=${encodeURIComponent(state.degree.id)}`);
+    const response = await fetch(`/api/scores?degree=${encodeURIComponent(state.degree.id)}&t=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) throw new Error('Could not load scores');
     const payload = await response.json();
     if (!Array.isArray(payload.scores)) throw new Error('Invalid scores response');
@@ -63,6 +63,8 @@ async function saveMatch(winner, loser, isFinal) {
     body: JSON.stringify({ degree: state.degree.id, winner: winner.name, loser: loser.name, final: isFinal })
   });
   if (!response.ok) throw new Error('Could not save match');
+  const payload = await response.json();
+  if (payload.score) state.scores[payload.score.professor_name] = payload.score;
 }
 
 async function refreshScores() {

@@ -65,6 +65,12 @@ def save_match(degree_id, winner, loser, is_final):
             "WHERE degree_id = ? AND professor_name = ?",
             (1 if is_final else 0, degree_id, winner),
         )
+        score = database.execute(
+            "SELECT professor_name, votes, wins FROM professor_scores "
+            "WHERE degree_id = ? AND professor_name = ?",
+            (degree_id, winner),
+        ).fetchone()
+        return dict(score)
 
 
 def admin_signature(value):
@@ -142,8 +148,8 @@ class ApplicationHandler(SimpleHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length).decode("utf-8"))
             required = (payload["degree"], payload["winner"], payload["loser"])
-            save_match(*required, bool(payload.get("final")))
-            self.send_json({"ok": True})
+            score = save_match(*required, bool(payload.get("final")))
+            self.send_json({"ok": True, "score": score})
         except (KeyError, TypeError, ValueError, json.JSONDecodeError):
             self.send_json({"error": "Invalid match"}, 400)
 
