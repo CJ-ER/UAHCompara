@@ -66,7 +66,20 @@ async function saveMatch(winner, loser, isFinal) {
 }
 
 async function refreshScores() {
+  const localScores = state.scores;
   await loadScores();
+  const serverScores = state.scores;
+  state.scores = { ...serverScores };
+  Object.entries(localScores).forEach(([professorName, localScore]) => {
+    const serverScore = state.scores[professorName];
+    if (!serverScore || localScore.votes > serverScore.votes || localScore.wins > serverScore.wins) {
+      state.scores[professorName] = {
+        ...(serverScore || localScore),
+        votes: Math.max(serverScore?.votes || 0, localScore.votes),
+        wins: Math.max(serverScore?.wins || 0, localScore.wins)
+      };
+    }
+  });
 }
 
 function weightedPick(pool) {
