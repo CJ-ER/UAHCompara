@@ -1,10 +1,10 @@
 import { ensureSchema, json, sql } from './_db.js';
 
 export default async function handler(request, response) {
-  if (request.method !== 'POST') return json(response, { error: 'Method not allowed' }, 405);
-  const { degree, winner, loser, final: isFinal } = request.body || {};
-  if (!degree || !winner || !loser) return json(response, { error: 'Invalid match' }, 400);
   try {
+    if (request.method !== 'POST') return json(response, { error: 'Method not allowed' }, 405);
+    const { degree, winner, loser, final: isFinal } = request.body || {};
+    if (!degree || !winner || !loser) return json(response, { error: 'Invalid match' }, 400);
     await ensureSchema();
     await sql`INSERT INTO professor_scores (degree_id, professor_name) VALUES (${degree}, ${winner}) ON CONFLICT DO NOTHING`;
     await sql`INSERT INTO professor_scores (degree_id, professor_name) VALUES (${degree}, ${loser}) ON CONFLICT DO NOTHING`;
@@ -13,6 +13,6 @@ export default async function handler(request, response) {
     return json(response, { ok: true, score: result.rows[0] });
   } catch (error) {
     console.error('Could not save match', error);
-    return json(response, { error: 'Could not save match' }, 500);
+    return json(response, { error: 'Could not save match', detail: String(error?.message || error) }, 500);
   }
 }
