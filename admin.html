@@ -12,6 +12,7 @@
     input, button { box-sizing: border-box; padding: 12px; font: inherit; }
     input { width: min(100%, 360px); border: 1px solid #aaa; }
     button { border: 0; background: #16242d; color: #fff; cursor: pointer; }
+    .danger-button { margin: 0 0 24px; background: #c4473d; }
     table { width: 100%; border-collapse: collapse; margin-top: 12px; }
     th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e5dfd4; }
     .muted { color: #66727a; }
@@ -55,9 +56,16 @@
           ${degrees.map(({ degree, scores }) => `<h3>${labels[degree]}</h3>
             <table><thead><tr><th>Profesor</th><th>Votos</th><th>Victorias</th></tr></thead>
             <tbody>${scores.length ? scores.map((score) => `<tr><td>${score.professor_name}</td><td>${score.votes}</td><td>${score.wins}</td></tr>`).join('') : '<tr><td colspan="3" class="muted">Sin votos todavía</td></tr>'}</tbody></table>`).join('')}
-        </article>`).join('');
+        </article>`).join('') + '<button class="danger-button" id="reset-votes" type="button">Reiniciar todas las votaciones</button>';
       form.hidden = true;
       dashboard.hidden = false;
+      document.querySelector('#reset-votes').addEventListener('click', async () => {
+        if (!confirm('Se borrarán todos los votos y victorias de todas las carreras. ¿Continuar?')) return;
+        const resetResponse = await fetch('/api/admin/reset', { method: 'POST' });
+        if (!resetResponse.ok) { message.textContent = 'No se pudieron reiniciar las votaciones.'; return; }
+        message.textContent = 'Todas las votaciones han vuelto a cero.';
+        await loadDashboard();
+      });
     }
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
