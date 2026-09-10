@@ -5,7 +5,7 @@ export default async function handler(request, response) {
   if (!isAdmin(request)) return json(response, { error: 'Unauthorized' }, 401);
   await ensureSchema();
   const result = await sql`SELECT degree_id, professor_name, votes, wins FROM professor_scores ORDER BY degree_id, wins DESC, votes DESC, professor_name`;
-  const byDegree = result.rows.reduce((groups, row) => ({
+  const byDegree = result.reduce((groups, row) => ({
     ...groups,
     [row.degree_id]: [...(groups[row.degree_id] || []), row]
   }), {});

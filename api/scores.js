@@ -5,5 +5,5 @@ export default async function handler(request, response) {
   await ensureSchema();
   const degree = String(request.query.degree || '');
   const result = await sql`SELECT professor_name, votes, wins FROM professor_scores WHERE degree_id = ${degree} ORDER BY wins DESC, votes DESC, professor_name`;
-  return json(response, { scores: result.rows });
+  return json(response, { scores: result });
 }
