@@ -28,6 +28,7 @@ const professors = [
 
 const state = { screen: 'home', degree: null, champion: null, opponent: null, round: 1, maxRounds: 6, scores: {} };
 const app = document.querySelector('#app');
+let pendingMatches = Promise.resolve();
 
 function getProfessorsFor(degree) {
   return officialCatalog[degree.id].professors.map((professor) => ({ ...professor, group: degree.group }));
@@ -57,11 +58,13 @@ async function saveMatch(winner, loser, isFinal) {
   winnerScore.votes += 1;
   if (isFinal) winnerScore.wins += 1;
   state.scores[winner.name] = winnerScore;
-  const response = await fetch('/api/matches', {
+  const request = pendingMatches.then(() => fetch('/api/matches', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ degree: state.degree.id, winner: winner.name, loser: loser.name, final: isFinal })
-  });
+  }));
+  pendingMatches = request.catch(() => {});
+  const response = await request;
   if (!response.ok) throw new Error('Could not save match');
   const payload = await response.json();
   if (payload.score) state.scores[payload.score.professor_name] = payload.score;

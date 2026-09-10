@@ -43,7 +43,8 @@ def initialize_database():
 def scores_for(degree_id):
     with connection() as database:
         return [dict(row) for row in database.execute(
-            "SELECT professor_name, votes, wins FROM professor_scores WHERE degree_id = ?",
+            "SELECT professor_name, votes, wins FROM professor_scores "
+            "WHERE degree_id = ? ORDER BY votes DESC, wins DESC, professor_name",
             (degree_id,),
         )]
 
