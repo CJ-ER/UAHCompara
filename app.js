@@ -57,7 +57,7 @@ async function saveMatch(winner, loser, isFinal) {
   const winnerScore = state.scores[winner.name] || { professor_name: winner.name, votes: 0, wins: 0 };
   winnerScore.votes += 1;
   if (isFinal) winnerScore.wins += 1;
-  state.scores[winner.name] = winnerScore;
+  state.scores[winner.name] = { ...winnerScore };
   const request = pendingMatches.then(() => fetch('/api/matches', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -71,20 +71,7 @@ async function saveMatch(winner, loser, isFinal) {
 }
 
 async function refreshScores() {
-  const localScores = state.scores;
   await loadScores();
-  const serverScores = state.scores;
-  state.scores = { ...serverScores };
-  Object.entries(localScores).forEach(([professorName, localScore]) => {
-    const serverScore = state.scores[professorName];
-    if (!serverScore || localScore.votes > serverScore.votes || localScore.wins > serverScore.wins) {
-      state.scores[professorName] = {
-        ...(serverScore || localScore),
-        votes: Math.max(serverScore?.votes || 0, localScore.votes),
-        wins: Math.max(serverScore?.wins || 0, localScore.wins)
-      };
-    }
-  });
 }
 
 function weightedPick(pool) {
@@ -251,11 +238,7 @@ app.addEventListener('click', (event) => {
   const action = event.target.closest('[data-action]')?.dataset.action;
   if (action === 'home') { state.degree = null; renderHome(); }
   if (action === 'restart' && state.degree) {
-    const pool = getProfessorsFor(state.degree);
-    state.champion = weightedPick(pool);
-    state.opponent = weightedPick(pool.filter((professor) => professor.name !== state.champion.name));
-    state.round = 1;
-    renderBattle();
+    startDegree(state.degree.id);
   }
 });
 

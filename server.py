@@ -20,13 +20,14 @@ DEPARTMENTS = {
 
 
 def connection():
-    database = sqlite3.connect(DATABASE)
+    database = sqlite3.connect(DATABASE, timeout=30.0)
     database.row_factory = sqlite3.Row
     return database
 
 
 def initialize_database():
     with connection() as database:
+        database.execute("PRAGMA journal_mode=WAL;")
         database.execute(
             """
             CREATE TABLE IF NOT EXISTS professor_scores (
@@ -141,6 +142,14 @@ class ApplicationHandler(SimpleHTTPRequestHandler):
                 )
                 return
             self.send_json({"error": "Unauthorized"}, 401)
+            return
+        if self.path == "/api/admin/reset":
+            if not is_admin(self):
+                self.send_json({"error": "Unauthorized"}, 401)
+                return
+            with connection() as database:
+                database.execute("DELETE FROM professor_scores")
+            self.send_json({"ok": True})
             return
         if self.path != "/api/matches":
             self.send_json({"error": "Not found"}, 404)
