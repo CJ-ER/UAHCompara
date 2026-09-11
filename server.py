@@ -97,7 +97,8 @@ DEPARTMENTS = [
     "Departamento de Electrónica",
     "Departamento de Física y Matemáticas",
     "Departamento de Teoría de la Señal y Comunicaciones",
-    "Departamento de Economía y Organización de Empresas",
+    "Departamento de Economía y Dirección de Empresas",
+    "Departamento de Química e Ingeniería Química",
 ]
 
 _prof_role_map = None
@@ -127,22 +128,25 @@ def get_prof_role_map():
 def classify_dept(roles_set):
     text = " · ".join(roles_set).lower() if roles_set else ""
 
-    # 1. Física y Matemáticas
-    if re.search(r"\b(matemática|matemáticas|física|álgebra|cálculo|estadística|ecuaciones|geometría|análisis matemático)\b", text):
+    # 1. Química e Ingeniería Química
+    if re.search(r"\b(química|químicas|medioambientales|medio ambiente|desarrollo industrial sostenible)\b", text):
+        return "Departamento de Química e Ingeniería Química"
+    # 2. Física y Matemáticas
+    if re.search(r"\b(física|fluidos|termodinámica|materia|matemática|matemáticas|álgebra|cálculo|estadística|ecuaciones|geometría|análisis matemático|probabilidad|físicos)\b", text):
         return "Departamento de Física y Matemáticas"
-    # 2. Electrónica
+    # 3. Economía y Dirección de Empresas
+    if re.search(r"\b(economía|empresa|empresarial|negocios|inversión|organización industrial|desarrollo de talento|comercio electrónico)\b", text):
+        return "Departamento de Economía y Dirección de Empresas"
+    # 4. Electrónica
     if re.search(r"\b(electrónica|circuitos|circuitos de comunicación|microelectrónica|instrumentación|sensor|sensores|tecnología electrónica)\b", text):
         return "Departamento de Electrónica"
-    # 3. Teoría de la Señal y Comunicaciones
-    if re.search(r"\b(redes|telemática|comunicaciones|radio|antenas|antena|transmisión|señal|servicios telemáticos|laboratorio de redes)\b", text):
+    # 5. Teoría de la Señal y Comunicaciones
+    if re.search(r"\b(redes|telemática|comunicaciones|radio|antenas|antena|transmisión|señal|señales|servicios telemáticos|laboratorio de redes|radiocomunicación|alta frecuencia|móviles|ópticas|fotónicas|fotónica|conmutación)\b", text):
         return "Departamento de Teoría de la Señal y Comunicaciones"
-    # 4. Automática
-    if re.search(r"\b(control|automática|automatización|robótica|sistemas operativos|visión artificial|sistemas digitales|sistemas empotrados|arquitectura|estructura de computadores|percepción|tiempo real)\b", text):
+    # 6. Automática
+    if re.search(r"\b(control|automática|automatización|robótica|robotizados|sistemas operativos|visión artificial|sistemas digitales|sistemas empotrados|arquitectura|estructura de computadores|percepción|tiempo real|máquinas eléctricas|tecnología eléctrica|eléctricas|mecanismos|mecánicos|mecánica|expresión gráfica|diseño mecánico)\b", text):
         return "Departamento de Automática"
-    # 5. Economía y Organización de Empresas
-    if re.search(r"\b(economía|empresa|organización de empresas|derecho|desarrollo de talento|gestión de la innovación)\b", text):
-        return "Departamento de Economía y Organización de Empresas"
-    # 6. Ciencias de la Computación
+    # 7. Ciencias de la Computación
     return "Departamento de Ciencias de la Computación"
 
 

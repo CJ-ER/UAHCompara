@@ -8,7 +8,8 @@ const DEPARTMENTS = [
   'Departamento de Electrónica',
   'Departamento de Física y Matemáticas',
   'Departamento de Teoría de la Señal y Comunicaciones',
-  'Departamento de Economía y Organización de Empresas'
+  'Departamento de Economía y Dirección de Empresas',
+  'Departamento de Química e Ingeniería Química'
 ];
 
 let profRoleMap = null;
@@ -38,27 +39,31 @@ function getProfRoleMap() {
 function classifyDept(rolesSet = new Set()) {
   const text = Array.from(rolesSet).join(' · ').toLowerCase();
 
-  // 1. Física y Matemáticas
-  if (/\b(matemática|matemáticas|física|álgebra|cálculo|estadística|ecuaciones|geometría|análisis matemático)\b/i.test(text)) {
+  // 1. Química e Ingeniería Química
+  if (/\b(química|químicas|medioambientales|medio ambiente|desarrollo industrial sostenible)\b/i.test(text)) {
+    return 'Departamento de Química e Ingeniería Química';
+  }
+  // 2. Física y Matemáticas
+  if (/\b(física|fluidos|termodinámica|materia|matemática|matemáticas|álgebra|cálculo|estadística|ecuaciones|geometría|análisis matemático|probabilidad|físicos)\b/i.test(text)) {
     return 'Departamento de Física y Matemáticas';
   }
-  // 2. Electrónica
+  // 3. Economía y Dirección de Empresas
+  if (/\b(economía|empresa|empresarial|negocios|inversión|organización industrial|desarrollo de talento|comercio electrónico)\b/i.test(text)) {
+    return 'Departamento de Economía y Dirección de Empresas';
+  }
+  // 4. Electrónica
   if (/\b(electrónica|circuitos|circuitos de comunicación|microelectrónica|instrumentación|sensor|sensores|tecnología electrónica)\b/i.test(text)) {
     return 'Departamento de Electrónica';
   }
-  // 3. Teoría de la Señal y Comunicaciones
-  if (/\b(redes|telemática|comunicaciones|radio|antenas|antena|transmisión|señal|servicios telemáticos|laboratorio de redes)\b/i.test(text)) {
+  // 5. Teoría de la Señal y Comunicaciones
+  if (/\b(redes|telemática|comunicaciones|radio|antenas|antena|transmisión|señal|señales|servicios telemáticos|laboratorio de redes|radiocomunicación|alta frecuencia|móviles|ópticas|fotónicas|fotónica|conmutación)\b/i.test(text)) {
     return 'Departamento de Teoría de la Señal y Comunicaciones';
   }
-  // 4. Automática
-  if (/\b(control|automática|automatización|robótica|sistemas operativos|visión artificial|sistemas digitales|sistemas empotrados|arquitectura|estructura de computadores|percepción|tiempo real)\b/i.test(text)) {
+  // 6. Automática
+  if (/\b(control|automática|automatización|robótica|robotizados|sistemas operativos|visión artificial|sistemas digitales|sistemas empotrados|arquitectura|estructura de computadores|percepción|tiempo real|máquinas eléctricas|tecnología eléctrica|eléctricas|mecanismos|mecánicos|mecánica|expresión gráfica|diseño mecánico)\b/i.test(text)) {
     return 'Departamento de Automática';
   }
-  // 5. Economía y Organización de Empresas
-  if (/\b(economía|empresa|organización de empresas|derecho|desarrollo de talento|gestión de la innovación)\b/i.test(text)) {
-    return 'Departamento de Economía y Organización de Empresas';
-  }
-  // 6. Ciencias de la Computación
+  // 7. Ciencias de la Computación (por defecto para programación, IA, software, bases de datos)
   return 'Departamento de Ciencias de la Computación';
 }
 
