@@ -2,6 +2,7 @@ import json
 import hashlib
 import hmac
 import os
+import re
 import sqlite3
 import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -90,41 +91,73 @@ def is_admin(request):
     return issued.isdigit() and time.time() - int(issued) < 86400 and hmac.compare_digest(signature, admin_signature(issued))
 
 
-DEGREE_TO_DEPT = {
-    "computadores": "Informática",
-    "sistemas-informacion": "Informática",
-    "informatica": "Informática",
-    "mates-computacion": "Informática",
-    "electronica-automatica": "Industriales",
-    "tecnologias-industriales": "Industriales",
-    "electronica-comunicaciones": "Telecomunicación",
-    "sistemas-telecomunicacion": "Telecomunicación",
-    "tecnologias-telecomunicacion": "Telecomunicación",
-    "telematica": "Telecomunicación",
-}
+DEPARTMENTS = [
+    "Automática",
+    "Ciencias de la Computación",
+    "Electrónica",
+    "Física y Matemáticas",
+    "Teoría de la Señal y Comunicaciones",
+    "Economía y Organización de Empresas",
+]
+
+_prof_role_map = None
+
+
+def get_prof_role_map():
+    global _prof_role_map
+    if _prof_role_map is not None:
+        return _prof_role_map
+    _prof_role_map = {}
+    try:
+        content = (ROOT / "catalog.js").read_text(encoding="utf-8")
+        json_str = content[content.find("{"):content.rfind("}") + 1]
+        catalog = json.loads(json_str)
+        for degree_data in catalog.values():
+            for p in degree_data.get("professors", []):
+                if p["name"] not in _prof_role_map:
+                    _prof_role_map[p["name"]] = p.get("role", "")
+    except Exception as err:
+        print("Could not load catalog in server.py:", err)
+    return _prof_role_map
+
+
+def classify_dept(role):
+    r = role.lower()
+    if re.search(r"\b(matemática|matemáticas|física|álgebra|cálculo|estadística|ecuaciones|geometría)\b", r):
+        return "Física y Matemáticas"
+    if re.search(r"\b(electrónica|circuito|circuitos|microelectrónica|instrumentación|sensor|sensores)\b", r):
+        return "Electrónica"
+    if re.search(r"\b(redes|comunicaci|telemática|señal|radio|antenas|antena|transmisión|telecomunicaci|ondas|fotónica)\b", r):
+        return "Teoría de la Señal y Comunicaciones"
+    if re.search(r"\b(control|automática|robótica|sistemas operativos|visión artificial|sistemas digitales|sistemas empotrados|arquitectura|autómatas)\b", r):
+        return "Automática"
+    if re.search(r"\b(economía|empresa|gestión de proyectos|organización|derecho|talento)\b", r):
+        return "Economía y Organización de Empresas"
+    return "Ciencias de la Computación"
 
 
 def admin_scores():
+    role_map = get_prof_role_map()
     with connection() as database:
         rows = [dict(row) for row in database.execute(
             "SELECT degree_id, professor_name, votes, wins FROM professor_scores"
         )]
-    dept_scores = {
-        "Informática": {},
-        "Industriales": {},
-        "Telecomunicación": {}
-    }
+    dept_scores = {d: {} for d in DEPARTMENTS}
     for row in rows:
-        dept = DEGREE_TO_DEPT.get(row["degree_id"], "Informática")
         prof = row["professor_name"]
+        role = role_map.get(prof, "")
+        dept = classify_dept(role)
+        if dept not in dept_scores:
+            dept_scores[dept] = {}
         if prof not in dept_scores[dept]:
             dept_scores[dept][prof] = {"professor_name": prof, "votes": 0, "wins": 0}
         dept_scores[dept][prof]["votes"] += row["votes"]
         dept_scores[dept][prof]["wins"] += row["wins"]
 
     result = {}
-    for dept, profs in dept_scores.items():
-        sorted_profs = sorted(profs.values(), key=lambda p: (-p["wins"], -p["votes"], p["professor_name"]))
+    for dept in DEPARTMENTS:
+        profs = dept_scores[dept].values()
+        sorted_profs = sorted(profs, key=lambda p: (-p["wins"], -p["votes"], p["professor_name"]))
         result[dept] = sorted_profs
     return result
 class ApplicationHandler(SimpleHTTPRequestHandler):
