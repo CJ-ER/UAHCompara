@@ -3,12 +3,12 @@ import path from 'node:path';
 import { ensureSchema, isAdmin, json, sql } from '../_db.js';
 
 const DEPARTMENTS = [
-  'Automática',
-  'Ciencias de la Computación',
-  'Electrónica',
-  'Física y Matemáticas',
-  'Teoría de la Señal y Comunicaciones',
-  'Economía y Organización de Empresas'
+  'Departamento de Automática',
+  'Departamento de Ciencias de la Computación',
+  'Departamento de Electrónica',
+  'Departamento de Física y Matemáticas',
+  'Departamento de Teoría de la Señal y Comunicaciones',
+  'Departamento de Economía y Organización de Empresas'
 ];
 
 let profRoleMap = null;
@@ -24,8 +24,9 @@ function getProfRoleMap() {
     for (const degreeData of Object.values(catalog)) {
       for (const p of degreeData.professors || []) {
         if (!profRoleMap[p.name]) {
-          profRoleMap[p.name] = p.role || '';
+          profRoleMap[p.name] = new Set();
         }
+        if (p.role) profRoleMap[p.name].add(p.role);
       }
     }
   } catch (err) {
@@ -34,24 +35,31 @@ function getProfRoleMap() {
   return profRoleMap;
 }
 
-function classifyDept(role = '') {
-  const r = role.toLowerCase();
-  if (/\b(matemática|matemáticas|física|álgebra|cálculo|estadística|ecuaciones|geometría)\b/i.test(r)) {
-    return 'Física y Matemáticas';
+function classifyDept(rolesSet = new Set()) {
+  const text = Array.from(rolesSet).join(' · ').toLowerCase();
+
+  // 1. Física y Matemáticas
+  if (/\b(matemática|matemáticas|física|álgebra|cálculo|estadística|ecuaciones|geometría|análisis matemático)\b/i.test(text)) {
+    return 'Departamento de Física y Matemáticas';
   }
-  if (/\b(electrónica|circuito|circuitos|microelectrónica|instrumentación|sensor|sensores)\b/i.test(r)) {
-    return 'Electrónica';
+  // 2. Electrónica
+  if (/\b(electrónica|circuitos|circuitos de comunicación|microelectrónica|instrumentación|sensor|sensores|tecnología electrónica)\b/i.test(text)) {
+    return 'Departamento de Electrónica';
   }
-  if (/\b(redes|comunicaci|telemática|señal|radio|antenas|antena|transmisión|telecomunicaci|ondas|fotónica)\b/i.test(r)) {
-    return 'Teoría de la Señal y Comunicaciones';
+  // 3. Teoría de la Señal y Comunicaciones
+  if (/\b(redes|telemática|comunicaciones|radio|antenas|antena|transmisión|señal|servicios telemáticos|laboratorio de redes)\b/i.test(text)) {
+    return 'Departamento de Teoría de la Señal y Comunicaciones';
   }
-  if (/\b(control|automática|robótica|sistemas operativos|visión artificial|sistemas digitales|sistemas empotrados|arquitectura|autómatas)\b/i.test(r)) {
-    return 'Automática';
+  // 4. Automática
+  if (/\b(control|automática|automatización|robótica|sistemas operativos|visión artificial|sistemas digitales|sistemas empotrados|arquitectura|estructura de computadores|percepción|tiempo real)\b/i.test(text)) {
+    return 'Departamento de Automática';
   }
-  if (/\b(economía|empresa|gestión de proyectos|organización|derecho|talento)\b/i.test(r)) {
-    return 'Economía y Organización de Empresas';
+  // 5. Economía y Organización de Empresas
+  if (/\b(economía|empresa|organización de empresas|derecho|desarrollo de talento|gestión de la innovación)\b/i.test(text)) {
+    return 'Departamento de Economía y Organización de Empresas';
   }
-  return 'Ciencias de la Computación';
+  // 6. Ciencias de la Computación
+  return 'Departamento de Ciencias de la Computación';
 }
 
 export default async function handler(request, response) {
@@ -64,8 +72,8 @@ export default async function handler(request, response) {
   const deptScores = Object.fromEntries(DEPARTMENTS.map((d) => [d, {}]));
 
   for (const row of result) {
-    const role = roleMap[row.professor_name] || '';
-    const dept = classifyDept(role);
+    const rolesSet = roleMap[row.professor_name] || new Set();
+    const dept = classifyDept(rolesSet);
     if (!deptScores[dept]) deptScores[dept] = {};
     if (!deptScores[dept][row.professor_name]) {
       deptScores[dept][row.professor_name] = { professor_name: row.professor_name, votes: 0, wins: 0 };

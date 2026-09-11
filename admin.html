@@ -464,12 +464,12 @@
 
       <nav class="dept-tabs" id="dept-tabs">
         <button class="tab-btn active" data-dept="all">Todos los departamentos</button>
-        <button class="tab-btn" data-dept="Automática">Automática</button>
-        <button class="tab-btn" data-dept="Ciencias de la Computación">Ciencias de la Computación</button>
-        <button class="tab-btn" data-dept="Electrónica">Electrónica</button>
-        <button class="tab-btn" data-dept="Física y Matemáticas">Física y Matemáticas</button>
-        <button class="tab-btn" data-dept="Teoría de la Señal y Comunicaciones">Teoría de la Señal y Comunicaciones</button>
-        <button class="tab-btn" data-dept="Economía y Organización de Empresas">Economía y Org. Empresas</button>
+        <button class="tab-btn" data-dept="Departamento de Automática">Automática</button>
+        <button class="tab-btn" data-dept="Departamento de Ciencias de la Computación">Ciencias de la Computación</button>
+        <button class="tab-btn" data-dept="Departamento de Electrónica">Electrónica</button>
+        <button class="tab-btn" data-dept="Departamento de Física y Matemáticas">Física y Matemáticas</button>
+        <button class="tab-btn" data-dept="Departamento de Teoría de la Señal y Comunicaciones">Teoría de la Señal</button>
+        <button class="tab-btn" data-dept="Departamento de Economía y Organización de Empresas">Economía y Org. Empresas</button>
       </nav>
 
       <div id="dept-content"></div>
@@ -530,6 +530,10 @@
             <span class="dept-meta">${totalWins} victorias totales · ${totalVotes} votos</span>
           </div>
 
+          <div style="margin-bottom: 12px; font-weight: 700; font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;">
+            <span>★ Los Más Valorados</span>
+          </div>
+
           <div class="podium-grid">
             ${top3.map((prof, idx) => {
               const meta = getProfessorMeta(prof.professor_name);
@@ -557,12 +561,16 @@
           </div>
 
           ${rest.length > 0 ? `
+            <div style="margin: 28px 0 12px; font-weight: 700; font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+              Clasificación General del Departamento
+            </div>
             <div class="ranking-list">
               ${rest.map((prof, idx) => {
                 const meta = getProfessorMeta(prof.professor_name);
+                const pos = (idx + 4) < 10 ? `0${idx + 4}` : `${idx + 4}`;
                 return `
                   <div class="ranking-row">
-                    <span class="row-pos">0${idx + 4}</span>
+                    <span class="row-pos">${pos}</span>
                     <img src="${meta.image}" alt="" class="row-avatar" onerror="this.src='assets/professors/placeholder.svg'">
                     <div class="row-info">
                       <div class="row-name">${prof.professor_name}</div>

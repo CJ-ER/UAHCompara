@@ -92,12 +92,12 @@ def is_admin(request):
 
 
 DEPARTMENTS = [
-    "Automática",
-    "Ciencias de la Computación",
-    "Electrónica",
-    "Física y Matemáticas",
-    "Teoría de la Señal y Comunicaciones",
-    "Economía y Organización de Empresas",
+    "Departamento de Automática",
+    "Departamento de Ciencias de la Computación",
+    "Departamento de Electrónica",
+    "Departamento de Física y Matemáticas",
+    "Departamento de Teoría de la Señal y Comunicaciones",
+    "Departamento de Economía y Organización de Empresas",
 ]
 
 _prof_role_map = None
@@ -114,26 +114,36 @@ def get_prof_role_map():
         catalog = json.loads(json_str)
         for degree_data in catalog.values():
             for p in degree_data.get("professors", []):
-                if p["name"] not in _prof_role_map:
-                    _prof_role_map[p["name"]] = p.get("role", "")
+                name = p["name"]
+                if name not in _prof_role_map:
+                    _prof_role_map[name] = set()
+                if p.get("role"):
+                    _prof_role_map[name].add(p["role"])
     except Exception as err:
         print("Could not load catalog in server.py:", err)
     return _prof_role_map
 
 
-def classify_dept(role):
-    r = role.lower()
-    if re.search(r"\b(matemática|matemáticas|física|álgebra|cálculo|estadística|ecuaciones|geometría)\b", r):
-        return "Física y Matemáticas"
-    if re.search(r"\b(electrónica|circuito|circuitos|microelectrónica|instrumentación|sensor|sensores)\b", r):
-        return "Electrónica"
-    if re.search(r"\b(redes|comunicaci|telemática|señal|radio|antenas|antena|transmisión|telecomunicaci|ondas|fotónica)\b", r):
-        return "Teoría de la Señal y Comunicaciones"
-    if re.search(r"\b(control|automática|robótica|sistemas operativos|visión artificial|sistemas digitales|sistemas empotrados|arquitectura|autómatas)\b", r):
-        return "Automática"
-    if re.search(r"\b(economía|empresa|gestión de proyectos|organización|derecho|talento)\b", r):
-        return "Economía y Organización de Empresas"
-    return "Ciencias de la Computación"
+def classify_dept(roles_set):
+    text = " · ".join(roles_set).lower() if roles_set else ""
+
+    # 1. Física y Matemáticas
+    if re.search(r"\b(matemática|matemáticas|física|álgebra|cálculo|estadística|ecuaciones|geometría|análisis matemático)\b", text):
+        return "Departamento de Física y Matemáticas"
+    # 2. Electrónica
+    if re.search(r"\b(electrónica|circuitos|circuitos de comunicación|microelectrónica|instrumentación|sensor|sensores|tecnología electrónica)\b", text):
+        return "Departamento de Electrónica"
+    # 3. Teoría de la Señal y Comunicaciones
+    if re.search(r"\b(redes|telemática|comunicaciones|radio|antenas|antena|transmisión|señal|servicios telemáticos|laboratorio de redes)\b", text):
+        return "Departamento de Teoría de la Señal y Comunicaciones"
+    # 4. Automática
+    if re.search(r"\b(control|automática|automatización|robótica|sistemas operativos|visión artificial|sistemas digitales|sistemas empotrados|arquitectura|estructura de computadores|percepción|tiempo real)\b", text):
+        return "Departamento de Automática"
+    # 5. Economía y Organización de Empresas
+    if re.search(r"\b(economía|empresa|organización de empresas|derecho|desarrollo de talento|gestión de la innovación)\b", text):
+        return "Departamento de Economía y Organización de Empresas"
+    # 6. Ciencias de la Computación
+    return "Departamento de Ciencias de la Computación"
 
 
 def admin_scores():
@@ -145,8 +155,8 @@ def admin_scores():
     dept_scores = {d: {} for d in DEPARTMENTS}
     for row in rows:
         prof = row["professor_name"]
-        role = role_map.get(prof, "")
-        dept = classify_dept(role)
+        roles_set = role_map.get(prof, set())
+        dept = classify_dept(roles_set)
         if dept not in dept_scores:
             dept_scores[dept] = {}
         if prof not in dept_scores[dept]:
