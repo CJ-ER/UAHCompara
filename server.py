@@ -90,19 +90,43 @@ def is_admin(request):
     return issued.isdigit() and time.time() - int(issued) < 86400 and hmac.compare_digest(signature, admin_signature(issued))
 
 
+DEGREE_TO_DEPT = {
+    "computadores": "Informática",
+    "sistemas-informacion": "Informática",
+    "informatica": "Informática",
+    "mates-computacion": "Informática",
+    "electronica-automatica": "Industriales",
+    "tecnologias-industriales": "Industriales",
+    "electronica-comunicaciones": "Telecomunicación",
+    "sistemas-telecomunicacion": "Telecomunicación",
+    "tecnologias-telecomunicacion": "Telecomunicación",
+    "telematica": "Telecomunicación",
+}
+
+
 def admin_scores():
     with connection() as database:
         rows = [dict(row) for row in database.execute(
-            "SELECT degree_id, professor_name, votes, wins FROM professor_scores "
-            "ORDER BY degree_id, wins DESC, votes DESC, professor_name"
+            "SELECT degree_id, professor_name, votes, wins FROM professor_scores"
         )]
-    by_degree = {}
-    for row in rows:
-        by_degree.setdefault(row["degree_id"], []).append(row)
-    return {
-        department: [{"degree": degree, "scores": by_degree.get(degree, [])} for degree in degrees]
-        for department, degrees in DEPARTMENTS.items()
+    dept_scores = {
+        "Informática": {},
+        "Industriales": {},
+        "Telecomunicación": {}
     }
+    for row in rows:
+        dept = DEGREE_TO_DEPT.get(row["degree_id"], "Informática")
+        prof = row["professor_name"]
+        if prof not in dept_scores[dept]:
+            dept_scores[dept][prof] = {"professor_name": prof, "votes": 0, "wins": 0}
+        dept_scores[dept][prof]["votes"] += row["votes"]
+        dept_scores[dept][prof]["wins"] += row["wins"]
+
+    result = {}
+    for dept, profs in dept_scores.items():
+        sorted_profs = sorted(profs.values(), key=lambda p: (-p["wins"], -p["votes"], p["professor_name"]))
+        result[dept] = sorted_profs
+    return result
 class ApplicationHandler(SimpleHTTPRequestHandler):
     def send_json(self, payload, status=200, headers=None):
         body = json.dumps(payload).encode("utf-8")

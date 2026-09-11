@@ -3,76 +3,640 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UAH Compara | Panel privado</title>
+  <title>UAH Compara | Panel de Calidad por Departamento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root { font-family: Arial, sans-serif; color: #16242d; background: #f5f1e8; }
-    body { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
-    h1, h2 { margin: 0 0 16px; }
-    form, .department { background: #fff; border: 1px solid #d8d1c4; padding: 24px; margin: 20px 0; }
-    input, button { box-sizing: border-box; padding: 12px; font: inherit; }
-    input { width: min(100%, 360px); border: 1px solid #aaa; }
-    button { border: 0; background: #16242d; color: #fff; cursor: pointer; }
-    .danger-button { margin: 0 0 24px; background: #c4473d; }
-    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e5dfd4; }
-    .muted { color: #66727a; }
-    #message { color: #c4473d; min-height: 20px; }
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-light: #eff6ff;
+      --gold: #f59e0b;
+      --gold-bg: #fffbeeb0;
+      --silver: #94a3b8;
+      --bronze: #d97706;
+      --bronze-bg: #fff7ed;
+      --danger: #ef4444;
+      --radius: 16px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 20px -2px rgba(15, 23, 42, 0.08);
+      --font-body: 'DM Sans', -apple-system, sans-serif;
+      --font-display: 'Space Grotesk', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    .site-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+      background-color: rgba(255, 255, 255, 0.9);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .brand-badge {
+      background: var(--text-main);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
+    }
+    .quality-tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--surface-border);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+      flex: 1;
+    }
+
+    /* Hero / Title Section */
+    .hero-panel {
+      margin-bottom: 32px;
+    }
+    .hero-panel h1 {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .hero-panel p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    /* Login Form Card */
+    .login-container {
+      max-width: 420px;
+      margin: 60px auto;
+      background: var(--surface);
+      padding: 36px;
+      border-radius: var(--radius);
+      border: 1px solid var(--surface-border);
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
+    .login-container h2 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+    .login-container p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--surface-border);
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    .btn-primary {
+      background: var(--text-main);
+      color: #fff;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+    .btn-primary:hover { background: #1e293b; }
+    .btn-primary:active { transform: scale(0.98); }
+    .error-msg {
+      color: var(--danger);
+      font-size: 0.9rem;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+
+    /* Navigation Tabs */
+    .dept-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--surface-border);
+      padding-bottom: 12px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover {
+      background: var(--surface);
+      color: var(--text-main);
+    }
+    .tab-btn.active {
+      background: var(--text-main);
+      color: #fff;
+    }
+
+    /* Department Section */
+    .department-section {
+      margin-bottom: 56px;
+    }
+    .dept-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 24px;
+    }
+    .dept-title {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dept-badge {
+      font-size: 0.8rem;
+      font-family: var(--font-body);
+      background: var(--accent-light);
+      color: var(--accent);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .dept-meta {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* Top 3 Podium Cards */
+    .podium-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .podium-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--surface-border);
+      padding: 24px;
+      position: relative;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .podium-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .podium-card.rank-1 {
+      border-color: rgba(245, 158, 11, 0.4);
+      background: linear-gradient(135deg, #ffffff 0%, var(--gold-bg) 100%);
+    }
+    .podium-card.rank-2 {
+      border-color: rgba(148, 163, 184, 0.4);
+    }
+    .podium-card.rank-3 {
+      border-color: rgba(217, 119, 6, 0.3);
+      background: linear-gradient(135deg, #ffffff 0%, var(--bronze-bg) 100%);
+    }
+
+    .rank-tag {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .rank-1 .rank-tag { background: var(--gold); color: #fff; }
+    .rank-2 .rank-tag { background: var(--silver); color: #fff; }
+    .rank-3 .rank-tag { background: var(--bronze); color: #fff; }
+
+    .prof-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--surface);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+    .prof-info { flex: 1; min-width: 0; }
+    .prof-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .prof-role {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.3;
+    }
+    .prof-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 0.85rem;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-num {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text-main);
+    }
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* List for remaining rankings (#4+) */
+    .ranking-list {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--surface-border);
+      overflow: hidden;
+    }
+    .ranking-row {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      gap: 16px;
+      border-bottom: 1px solid var(--surface-border);
+      transition: background-color 0.15s;
+    }
+    .ranking-row:last-child { border-bottom: none; }
+    .ranking-row:hover { background-color: var(--bg); }
+
+    .row-pos {
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--text-muted);
+      width: 28px;
+      font-size: 0.95rem;
+    }
+    .row-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--surface-border);
+    }
+    .row-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .row-name {
+      font-weight: 600;
+      font-size: 0.98rem;
+    }
+    .row-role {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .row-metrics {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+    .row-wins {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Empty state */
+    .empty-card {
+      background: var(--surface);
+      border: 1px dashed var(--surface-border);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Danger reset button footer */
+    .actions-footer {
+      margin-top: 60px;
+      padding-top: 24px;
+      border-top: 1px solid var(--surface-border);
+      display: flex;
+      justify-content: flex-end;
+    }
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.08);
+      border-color: var(--danger);
+    }
   </style>
 </head>
 <body>
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-badge">UC</span>
+      <span>UAHCompara</span>
+    </div>
+    <div class="quality-tag">
+      <span class="status-dot"></span>
+      <span>Dirección de Calidad Docente</span>
+    </div>
+  </header>
+
   <main>
-    <h1>Panel privado de calidad</h1>
-    <p class="muted">Estadísticas anónimas de UAH Compara</p>
-    <form id="login-form">
-      <label for="password">Contraseña de administración</label><br><br>
-      <input id="password" type="password" autocomplete="current-password" required>
-      <button type="submit">Entrar</button>
-      <p id="message" role="alert"></p>
-    </form>
-    <section id="dashboard" hidden></section>
+    <div id="login-screen" class="login-container">
+      <h2>Panel Privado de Calidad</h2>
+      <p>Introduce la clave de acceso autorizada para visualizar las métricas por departamento.</p>
+      <form id="login-form" class="form-group">
+        <input id="password" type="password" class="form-input" placeholder="Contraseña de acceso" autocomplete="current-password" required autofocus>
+        <button type="submit" class="btn-primary">Acceder al panel</button>
+      </form>
+      <p id="error-message" class="error-msg" role="alert"></p>
+    </div>
+
+    <div id="dashboard" hidden>
+      <section class="hero-panel">
+        <h1>Valoración Docente por Departamento</h1>
+        <p>Ranking unificado basado en los duelos y votos directos de la comunidad de estudiantes.</p>
+      </section>
+
+      <nav class="dept-tabs" id="dept-tabs">
+        <button class="tab-btn active" data-dept="all">Todos los departamentos</button>
+        <button class="tab-btn" data-dept="Informática">Informática</button>
+        <button class="tab-btn" data-dept="Industriales">Industriales</button>
+        <button class="tab-btn" data-dept="Telecomunicación">Telecomunicación</button>
+      </nav>
+
+      <div id="dept-content"></div>
+
+      <div class="actions-footer">
+        <button id="reset-votes" class="btn-danger" type="button">Reiniciar historial de votaciones</button>
+      </div>
+    </div>
   </main>
+
+  <script src="catalog.js"></script>
   <script>
-    const form = document.querySelector('#login-form');
-    const message = document.querySelector('#message');
+    const loginScreen = document.querySelector('#login-screen');
     const dashboard = document.querySelector('#dashboard');
-    const labels = {
-      computadores: 'Ingeniería de Computadores',
-      'sistemas-informacion': 'Ingeniería en Sistemas de Información',
-      informatica: 'Ingeniería Informática',
-      'mates-computacion': 'Matemáticas y Computación',
-      'electronica-automatica': 'Ingeniería en Electrónica y Automática Industrial',
-      'tecnologias-industriales': 'Ingeniería en Tecnologías Industriales',
-      'electronica-comunicaciones': 'Ingeniería Electrónica de Comunicaciones',
-      'sistemas-telecomunicacion': 'Ingeniería en Sistemas de Telecomunicación',
-      'tecnologias-telecomunicacion': 'Ingeniería en Tecnologías de Telecomunicación',
-      telematica: 'Ingeniería Telemática'
-    };
+    const loginForm = document.querySelector('#login-form');
+    const errorMessage = document.querySelector('#error-message');
+    const deptContent = document.querySelector('#dept-content');
+    const deptTabs = document.querySelector('#dept-tabs');
+
+    let departmentsData = {};
+    let currentFilter = 'all';
+
+    function getProfessorMeta(name) {
+      if (typeof officialCatalog !== 'undefined') {
+        for (const degreeData of Object.values(officialCatalog)) {
+          if (Array.isArray(degreeData.professors)) {
+            const match = degreeData.professors.find(p => p.name === name);
+            if (match) return match;
+          }
+        }
+      }
+      return { image: 'assets/professors/placeholder.svg', role: 'Docente EPS UAH' };
+    }
+
+    function renderDepartment(departmentName, professors) {
+      const totalVotes = professors.reduce((acc, p) => acc + (p.votes || 0), 0);
+      const totalWins = professors.reduce((acc, p) => acc + (p.wins || 0), 0);
+
+      if (!professors || professors.length === 0) {
+        return `
+          <section class="department-section">
+            <div class="dept-header">
+              <h2 class="dept-title">${departmentName} <span class="dept-badge">0 docentes</span></h2>
+            </div>
+            <div class="empty-card">
+              No se han registrado votaciones aún para profesores de este departamento.
+            </div>
+          </section>`;
+      }
+
+      const top3 = professors.slice(0, 3);
+      const rest = professors.slice(3);
+
+      return `
+        <section class="department-section">
+          <div class="dept-header">
+            <h2 class="dept-title">${departmentName} <span class="dept-badge">${professors.length} docentes valorados</span></h2>
+            <span class="dept-meta">${totalWins} victorias totales · ${totalVotes} votos</span>
+          </div>
+
+          <div class="podium-grid">
+            ${top3.map((prof, idx) => {
+              const meta = getProfessorMeta(prof.professor_name);
+              const rankClass = `rank-${idx + 1}`;
+              return `
+                <article class="podium-card ${rankClass}">
+                  <span class="rank-tag">#${idx + 1}</span>
+                  <img src="${meta.image}" alt="" class="prof-avatar" onerror="this.src='assets/professors/placeholder.svg'">
+                  <div class="prof-info">
+                    <h3 class="prof-name" title="${prof.professor_name}">${prof.professor_name}</h3>
+                    <p class="prof-role">${meta.role}</p>
+                    <div class="prof-stats">
+                      <div class="stat-item">
+                        <span class="stat-num">${prof.wins}</span>
+                        <span class="stat-label">Victorias</span>
+                      </div>
+                      <div class="stat-item">
+                        <span class="stat-num">${prof.votes}</span>
+                        <span class="stat-label">Votos</span>
+                      </div>
+                    </div>
+                  </div>
+                </article>`;
+            }).join('')}
+          </div>
+
+          ${rest.length > 0 ? `
+            <div class="ranking-list">
+              ${rest.map((prof, idx) => {
+                const meta = getProfessorMeta(prof.professor_name);
+                return `
+                  <div class="ranking-row">
+                    <span class="row-pos">0${idx + 4}</span>
+                    <img src="${meta.image}" alt="" class="row-avatar" onerror="this.src='assets/professors/placeholder.svg'">
+                    <div class="row-info">
+                      <div class="row-name">${prof.professor_name}</div>
+                      <div class="row-role">${meta.role}</div>
+                    </div>
+                    <div class="row-metrics">
+                      <span class="row-wins">${prof.wins} vic.</span>
+                      <span>${prof.votes} votos</span>
+                    </div>
+                  </div>`;
+              }).join('')}
+            </div>` : ''}
+        </section>`;
+    }
+
+    function renderDashboard() {
+      const activeDepts = currentFilter === 'all'
+        ? Object.keys(departmentsData)
+        : [currentFilter];
+
+      deptContent.innerHTML = activeDepts
+        .map(dept => renderDepartment(dept, departmentsData[dept] || []))
+        .join('');
+    }
+
     async function loadDashboard() {
       const response = await fetch('/api/admin/scores');
       if (!response.ok) throw new Error('No autorizado');
-      const { departments } = await response.json();
-      dashboard.innerHTML = Object.entries(departments).map(([department, degrees]) => `
-        <article class="department"><h2>${department}</h2>
-          ${degrees.map(({ degree, scores }) => `<h3>${labels[degree]}</h3>
-            <table><thead><tr><th>Profesor</th><th>Votos</th><th>Victorias</th></tr></thead>
-            <tbody>${scores.length ? scores.map((score) => `<tr><td>${score.professor_name}</td><td>${score.votes}</td><td>${score.wins}</td></tr>`).join('') : '<tr><td colspan="3" class="muted">Sin votos todavía</td></tr>'}</tbody></table>`).join('')}
-        </article>`).join('') + '<button class="danger-button" id="reset-votes" type="button">Reiniciar todas las votaciones</button>';
-      form.hidden = true;
+      const data = await response.json();
+      departmentsData = data.departments || {};
+      
+      loginScreen.hidden = true;
       dashboard.hidden = false;
-      document.querySelector('#reset-votes').addEventListener('click', async () => {
-        if (!confirm('Se borrarán todos los votos y victorias de todas las carreras. ¿Continuar?')) return;
-        const resetResponse = await fetch('/api/admin/reset', { method: 'POST' });
-        if (!resetResponse.ok) { message.textContent = 'No se pudieron reiniciar las votaciones.'; return; }
-        message.textContent = 'Todas las votaciones han vuelto a cero.';
-        await loadDashboard();
-      });
+      renderDashboard();
     }
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      message.textContent = '';
-      const response = await fetch('/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: document.querySelector('#password').value }) });
-      if (!response.ok) { message.textContent = 'Contraseña incorrecta o panel no configurado.'; return; }
-      try { await loadDashboard(); } catch { message.textContent = 'No se pudo cargar el panel.'; }
+
+    deptTabs.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-dept]');
+      if (!btn) return;
+      deptTabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFilter = btn.dataset.dept;
+      renderDashboard();
+    });
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMessage.textContent = '';
+      const password = document.querySelector('#password').value;
+      
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+        
+        if (!res.ok) {
+          errorMessage.textContent = 'Contraseña incorrecta';
+          return;
+        }
+        await loadDashboard();
+      } catch {
+        errorMessage.textContent = 'Error de conexión con el servidor.';
+      }
+    });
+
+    document.querySelector('#reset-votes').addEventListener('click', async () => {
+      if (!confirm('¿Atención: Se borrarán permanentemente todas las victorias y votos registrados para todos los departamentos. ¿Deseas continuar?')) return;
+      
+      const res = await fetch('/api/admin/reset', { method: 'POST' });
+      if (res.ok) {
+        alert('Todas las votaciones han sido reiniciadas.');
+        await loadDashboard();
+      } else {
+        alert('No se pudo reiniciar el historial.');
+      }
     });
   </script>
 </body>
